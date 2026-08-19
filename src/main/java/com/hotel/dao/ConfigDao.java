@@ -100,7 +100,7 @@ public class ConfigDao {
                 map.put(rs.getString(1), rs.getString(2));
             }
         } catch (SQLException e) {
-            System.err.println("读取所有配置失败：" + e.getMessage());
+            System.err.println("すべての設定の読み込みに失敗しました：" + e.getMessage());
         }
         return map;
     }
