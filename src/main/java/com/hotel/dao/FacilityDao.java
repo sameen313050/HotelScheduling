@@ -8,13 +8,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 设施数据库操作
+ * 施設データベースの操作
+ * Facility database operations
  */
+
 public class FacilityDao {
 
     /**
-     * 查询所有设施
+     * すべての施設を取得する
+     * Retrieve all facilities
      */
+    
     public List<Facility> findAll() {
         List<Facility> list = new ArrayList<>();
         String sql = "SELECT id, name, note FROM facility ORDER BY id";
@@ -32,7 +36,7 @@ public class FacilityDao {
             }
 
         } catch (SQLException e) {
-            System.err.println("查询设施失败：" + e.getMessage());
+            System.err.println("施設情報の取得に失敗しました：" + e.getMessage());
             e.printStackTrace();
         }
 
@@ -40,8 +44,10 @@ public class FacilityDao {
     }
 
     /**
-     * 新增设施
+     * 施設を追加する
+     * Add a facility
      */
+    
     public boolean insert(Facility facility) {
         String sql = "INSERT INTO facility (name, note) VALUES (?, ?)";
 
@@ -62,7 +68,7 @@ public class FacilityDao {
             }
 
         } catch (SQLException e) {
-            System.err.println("新增设施失败：" + e.getMessage());
+            System.err.println("施設の追加に失敗しました：" + e.getMessage());
             e.printStackTrace();
         }
 
@@ -70,8 +76,10 @@ public class FacilityDao {
     }
 
     /**
-     * 更新设施
+     * 施設情報を更新する
+     * Update a facility
      */
+    
     public boolean update(Facility facility) {
         String sql = "UPDATE facility SET name = ?, note = ? WHERE id = ?";
 
@@ -85,7 +93,7 @@ public class FacilityDao {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            System.err.println("更新设施失败：" + e.getMessage());
+            System.err.println("施設情報の更新に失敗しました：" + e.getMessage());
             e.printStackTrace();
         }
 
@@ -93,8 +101,10 @@ public class FacilityDao {
     }
 
     /**
-     * 删除设施
+     * 施設を削除する
+     * Delete a facility
      */
+    
     public boolean delete(int id) {
         String sql = "DELETE FROM facility WHERE id = ?";
 
@@ -105,7 +115,7 @@ public class FacilityDao {
             return ps.executeUpdate() > 0;
 
         } catch (SQLException e) {
-            System.err.println("删除设施失败：" + e.getMessage());
+            System.err.println("施設の削除に失敗しました：" + e.getMessage());
             e.printStackTrace();
         }
 
