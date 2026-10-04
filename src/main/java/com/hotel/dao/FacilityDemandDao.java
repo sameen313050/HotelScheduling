@@ -9,6 +9,8 @@ import java.util.List;
 
 /**
  * 设施需求数据库操作
+ * 施設需要データベースの操作
+ * Facility demand database operations
  */
 public class FacilityDemandDao {
 
@@ -42,7 +44,7 @@ public class FacilityDemandDao {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("查询设施需求失败：" + e.getMessage());
+            System.err.println("施設需要情報の取得に失敗しました：" + e.getMessage());
             e.printStackTrace();
         }
 
@@ -70,7 +72,7 @@ public class FacilityDemandDao {
                 return true;
             }
         } catch (SQLException e) {
-            System.err.println("新增设施需求失败：" + e.getMessage());
+            System.err.println("施設需要情報の追加に失敗しました：" + e.getMessage());
             e.printStackTrace();
         }
         return false;
@@ -91,7 +93,7 @@ public class FacilityDemandDao {
 
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("更新设施需求失败：" + e.getMessage());
+            System.err.println("施設需要情報の更新に失敗しました：" + e.getMessage());
             e.printStackTrace();
         }
         return false;
@@ -104,7 +106,7 @@ public class FacilityDemandDao {
             ps.setInt(1, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("删除设施需求失败：" + e.getMessage());
+            System.err.println("施設需要情報の削除に失敗しました：" + e.getMessage());
             e.printStackTrace();
         }
         return false;

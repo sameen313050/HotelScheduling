@@ -10,6 +10,10 @@ import java.util.List;
 /**
  * 员工数据库操作
  * 包括员工本身的增删改查，以及员工-设施关联的维护
+ * 従業員データベースの操作
+ * Employee database operations
+ * 従業員情報の登録・取得・更新・削除、および従業員と施設の関連付けを管理する
+ * Manage employee CRUD operations and employee-facility associations
  */
 public class EmployeeDao {
 
@@ -43,14 +47,17 @@ public class EmployeeDao {
             }
 
         } catch (SQLException ex) {
-            System.err.println("查询员工失败：" + ex.getMessage());
+            System.err.println("従業員情報の取得に失敗しました：" + ex.getMessage());
             ex.printStackTrace();
         }
 
         return list;
     }
 
-    /** 查询某员工关联的所有设施 ID */
+    /** 查询某员工关联的所有设施 ID
+     * 指定した従業員に関連付けられているすべての施設IDを取得する
+     * Retrieve all facility IDs associated with the specified employee
+     */
     private List<Integer> findFacilityIds(Connection conn, int employeeId) throws SQLException {
         List<Integer> ids = new ArrayList<>();
         String sql = "SELECT facility_id FROM employee_facility WHERE employee_id = ?";
@@ -103,7 +110,7 @@ public class EmployeeDao {
             }
 
         } catch (SQLException ex) {
-            System.err.println("新增员工失败：" + ex.getMessage());
+            System.err.println("従業員の追加に失敗しました：" + ex.getMessage());
             ex.printStackTrace();
         }
 
@@ -144,7 +151,7 @@ public class EmployeeDao {
             }
 
         } catch (SQLException ex) {
-            System.err.println("更新员工失败：" + ex.getMessage());
+            System.err.println("従業員情報の更新に失敗しました：" + ex.getMessage());
             ex.printStackTrace();
         }
 
@@ -174,14 +181,17 @@ public class EmployeeDao {
             }
 
         } catch (SQLException ex) {
-            System.err.println("删除员工失败：" + ex.getMessage());
+            System.err.println("従業員の削除に失敗しました：" + ex.getMessage());
             ex.printStackTrace();
         }
 
         return false;
     }
 
-    /** 保存员工-设施关联（批量插入） */
+    /** 保存员工-设施关联（批量插入）
+     * 従業員と施設の関連付けを保存する（一括挿入）
+     * Save employee-facility associations (batch insert)
+     */
     private void saveFacilityLinks(Connection conn, int employeeId, List<Integer> facilityIds) throws SQLException {
         if (facilityIds == null || facilityIds.isEmpty()) return;
 
@@ -209,5 +219,25 @@ public class EmployeeDao {
  * 	•	事务（transaction）：conn.setAutoCommit(false) + commit() / rollback()。意思是”要么都成功，要么都失败”。新增员工时如果保存关联设施失败，员工记录也会回滚，避免出现”员工建好了但关联没建”的脏数据
  * 	•	rs.wasNull()：判断刚读出来的 int 在数据库里是不是 NULL（因为 int 本身不能是 null）
  * 	•	批量插入：addBatch() + executeBatch() 比循环一条条 insert 快很多
+ *  • トランザクション（transaction）：conn.setAutoCommit(false) + commit() / rollback()。
+ *   「すべて成功するか、すべて失敗するか」を保証する。
+ *   従業員の追加時に関連施設の保存が失敗した場合、従業員レコードもロールバックされ、
+ *   従業員だけが登録されて関連付けがない不整合なデータを防止する。
+ *
+ *  • Transaction: conn.setAutoCommit(false) + commit() / rollback().
+ *   This ensures that all operations either succeed together or fail together.
+ *   If saving facility associations fails while adding an employee, the employee record
+ *   is also rolled back, preventing inconsistent data without the required associations.
+ *
+ *  • rs.wasNull()：直前に読み込んだ int 値がデータベース上で NULL だったかを確認する
+ *   （プリミティブ型の int 自体は null にできないため）。
+ *
+ *  • rs.wasNull(): Check whether the int value just read was NULL in the database,
+ *   because the primitive int type itself cannot be null.
+ *
+ *  • 一括挿入：addBatch() + executeBatch() は、insert を一件ずつループ実行するより高速である。
+ *
+ *  • Batch insert: addBatch() + executeBatch() is much faster than executing
+ *   individual insert statements in a loop.
  */
 

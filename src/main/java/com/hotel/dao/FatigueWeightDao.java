@@ -9,11 +9,15 @@ import java.util.Map;
 
 /**
  * 疲劳权重数据库操作
+ * 疲労度重みデータベースの操作
+ * Fatigue weight database operations
  */
 public class FatigueWeightDao {
 
     /**
      * 查询某个设施所有班次的疲劳权重，返回 Map<shiftTypeId, weight>
+     * 指定した施設の全シフトの疲労度重みを取得し、Map<shiftTypeId, weight> を返す
+     * Retrieve the fatigue weights for all shifts at the specified facility and return Map<shiftTypeId, weight>
      */
     public Map<Integer, Double> findByFacility(int facilityId) {
         Map<Integer, Double> map = new HashMap<>();
@@ -27,13 +31,15 @@ public class FatigueWeightDao {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("查询疲劳权重失败：" + e.getMessage());
+            System.err.println("疲労度重みの取得に失敗しました：" + e.getMessage());
         }
         return map;
     }
 
     /**
      * 写入一条疲劳权重（如果该 facility+shift 已存在则更新）
+     * 疲労度重みを1件保存する（同じ施設とシフトの組み合わせが存在する場合は更新する）
+     * Save a fatigue weight entry (update it if the same facility-shift combination already exists)
      */
     public boolean save(int facilityId, int shiftTypeId, double weight) {
         String sql = """
@@ -48,13 +54,15 @@ public class FatigueWeightDao {
             ps.setDouble(3, weight);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.err.println("保存疲劳权重失败：" + e.getMessage());
+            System.err.println("疲労度重みの保存に失敗しました：" + e.getMessage());
             return false;
         }
     }
 
     /**
      * 删除某设施的所有疲劳权重（用于重置）
+     * 指定した施設のすべての疲労度重みを削除する（リセット用）
+     * Delete all fatigue weights for the specified facility (used for resetting)
      */
     public boolean deleteByFacility(int facilityId) {
         String sql = "DELETE FROM fatigue_weight WHERE facility_id = ?";
@@ -64,7 +72,7 @@ public class FatigueWeightDao {
             ps.executeUpdate();
             return true;
         } catch (SQLException e) {
-            System.err.println("删除疲劳权重失败：" + e.getMessage());
+            System.err.println("疲労度重みの削除に失敗しました：" + e.getMessage());
             return false;
         }
     }

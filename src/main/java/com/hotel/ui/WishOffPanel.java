@@ -62,12 +62,8 @@ public class WishOffPanel extends JPanel {
         topPanel.add(new JLabel("员工："));
         employeeBox = new JComboBox<>();
         employeeBox.setPreferredSize(new Dimension(200, 28));
-        for (Employee e : employeeDao.findAll()) {
-            if (e.isActive()) {  // 只显示在职员工
-                employeeBox.addItem(e);
-            }
-        }
         topPanel.add(employeeBox);
+        reloadEmployees();  // 抽出来的加载方法
 
         add(topPanel, BorderLayout.NORTH);
 
@@ -217,6 +213,36 @@ public class WishOffPanel extends JPanel {
             c.setSelected(false);
         }
         updateCountLabel();
+    }
+
+    /** 重新从数据库加载员工列表，保留当前选中项 */
+    private void reloadEmployees() {
+        Employee currentSelected = (Employee) employeeBox.getSelectedItem();
+        int selectedId = (currentSelected == null) ? -1 : currentSelected.getId();
+
+        employeeBox.removeAllItems();
+        for (Employee e : employeeDao.findAll()) {
+            if (e.isActive()) {
+                employeeBox.addItem(e);
+                if (e.getId() == selectedId) {
+                    employeeBox.setSelectedItem(e);
+                }
+            }
+        }
+    }
+
+    @Override
+    public void addNotify() {
+        super.addNotify();
+        // 每次面板被加到窗口显示时触发一次刷新
+        // 用 hierarchy listener 精确监听"变可见"
+        addHierarchyListener(e -> {
+            if ((e.getChangeFlags() & java.awt.event.HierarchyEvent.SHOWING_CHANGED) != 0) {
+                if (isShowing()) {
+                    reloadEmployees();
+                }
+            }
+        });
     }
 
 }

@@ -160,6 +160,16 @@ public class SchedulingEngine {
             }
         }
 
+        // 硬性7：专职夜勤员工只能上夜班
+        if ("夜勤専属".equals(e.getEmployeeType()) && !"夜".equals(task.getShiftType().getPeriod())) {
+            return false;
+        }
+
+        // 硬性8：夜班只有专职夜勤能上（正社员/契约社员/兼职都不参与）
+        if ("夜".equals(task.getShiftType().getPeriod()) && !"夜勤専属".equals(e.getEmployeeType())) {
+            return false;
+        }
+
         return true;
     }
 
@@ -181,12 +191,11 @@ public class SchedulingEngine {
             s -= 100 * ctx.getPriorityWishOff();
         }
 
-        // 因素4：专职夜勤员工优先夜班，正常员工尽量不排夜班
-        boolean isNightSpecialist = "夜勤専属".equals(e.getEmployeeType());
+        // 因素4：普通员工尽量不排夜班（专职夜勤会被硬性优先，不需要在这里加分）
+        // 专职夜勤员工只能上夜班（在 canAssign 里已硬性限制），所以到这里的都是夜班任务
         boolean isNightShift = "夜".equals(task.getShiftType().getPeriod());
-        if (isNightSpecialist && isNightShift) s += 20;
-        if (isNightSpecialist && !isNightShift) s -= 15;
-        if (!isNightSpecialist && isNightShift) s -= 5;
+        boolean isNightSpecialist = "夜勤専属".equals(e.getEmployeeType());
+        if (!isNightSpecialist && isNightShift) s -= 5;  // 普通员工上夜班小扣分（专职夜勤不够时才让普通员工顶）
 
         // 因素5：平日/公休均衡
         boolean isWeekend = task.getDate().getDayOfWeek() == DayOfWeek.SATURDAY
