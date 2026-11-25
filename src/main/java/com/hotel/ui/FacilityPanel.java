@@ -10,6 +10,12 @@ import java.util.List;
 
 /**
  * 设施管理面板
+ * 施設管理パネル
+ * Facility management panel
+ *
+ * <p>提供设施 CRUD 操作，并支持为每个设施配置需求规则（跳转到 FacilityDemandDialog）。</p>
+ * <p>施設の CRUD 操作を提供、各施設の需要設定（FacilityDemandDialog へ遷移）も可能。</p>
+ * <p>Provides CRUD operations for facilities, and allows configuring demand rules per facility (opens FacilityDemandDialog).</p>
  */
 public class FacilityPanel extends JPanel {
 
@@ -17,17 +23,22 @@ public class FacilityPanel extends JPanel {
     private DefaultTableModel tableModel;
     private JTable table;
 
+    /**
+     * 构造方法：初始化 UI 并加载数据
+     * コンストラクタ：UI 初期化とデータ読み込み
+     * Constructor: initializes UI and loads data
+     */
     public FacilityPanel() {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // 顶部按钮区
+        // 顶部按钮区 / 上部ボタンエリア / Top button area
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton addBtn = new JButton("新增设施");
-        JButton editBtn = new JButton("编辑");
-        JButton deleteBtn = new JButton("删除");
-        JButton refreshBtn = new JButton("刷新");
-        JButton demandBtn = new JButton("配置需求");
+        JButton addBtn = new JButton("新規追加");
+        JButton editBtn = new JButton("編集");
+        JButton deleteBtn = new JButton("削除");
+        JButton refreshBtn = new JButton("更新");
+        JButton demandBtn = new JButton("需要設定");
 
         topPanel.add(addBtn);
         topPanel.add(editBtn);
@@ -36,12 +47,15 @@ public class FacilityPanel extends JPanel {
         topPanel.add(demandBtn);
         add(topPanel, BorderLayout.NORTH);
 
-        // 中间表格
-        String[] columns = {"ID", "名称", "备注"};
+        // 中间表格 / 中央テーブル / Center table
+        String[] columns = {"ID", "名称", "備考"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false;  // 表格只读，编辑通过弹窗
+                // 表格只读，编辑通过弹窗进行
+                // テーブルは読み取り専用、編集はダイアログで実施
+                // Table is read-only; edits are made via dialog
+                return false;
             }
         };
         table = new JTable(tableModel);
@@ -51,15 +65,16 @@ public class FacilityPanel extends JPanel {
 
         add(new JScrollPane(table), BorderLayout.CENTER);
 
-        // 绑定按钮事件
+        // 绑定按钮事件 / ボタンイベントバインド / Bind button events
         addBtn.addActionListener(e -> showEditDialog(null));
         editBtn.addActionListener(e -> editSelected());
         deleteBtn.addActionListener(e -> deleteSelected());
         refreshBtn.addActionListener(e -> loadData());
         demandBtn.addActionListener(e -> showDemandDialog());
 
-
-        // 双击行也触发编辑
+        // 双击行 → 编辑
+        // 行ダブルクリック → 編集
+        // Double-click row → edit
         table.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -69,14 +84,14 @@ public class FacilityPanel extends JPanel {
             }
         });
 
-        // 初始加载数据
+        // 初始加载数据 / 初期データロード / Initial data load
         loadData();
-
-
     }
 
     /**
      * 加载数据填充表格
+     * データを読み込みテーブルに表示
+     * Load data into the table
      */
     private void loadData() {
         tableModel.setRowCount(0);
@@ -87,12 +102,12 @@ public class FacilityPanel extends JPanel {
     }
 
     /**
-     * 编辑选中行
+     * 编辑选中行 / 選択行を編集 / Edit selected row
      */
     private void editSelected() {
         int row = table.getSelectedRow();
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "请先选择一行");
+            JOptionPane.showMessageDialog(this, "行を選択してください");
             return;
         }
         Facility f = new Facility();
@@ -103,38 +118,43 @@ public class FacilityPanel extends JPanel {
     }
 
     /**
-     * 删除选中行
+     * 删除选中行（含二次确认）
+     * 選択行を削除（確認ダイアログあり）
+     * Delete selected row (with confirmation)
      */
     private void deleteSelected() {
         int row = table.getSelectedRow();
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "请先选择一行");
+            JOptionPane.showMessageDialog(this, "行を選択してください");
             return;
         }
         int id = (int) tableModel.getValueAt(row, 0);
         String name = (String) tableModel.getValueAt(row, 1);
 
         int confirm = JOptionPane.showConfirmDialog(this,
-                "确定要删除设施「" + name + "」吗？\n注意：相关的班次配置、稼働率、排班数据也会受影响。",
-                "确认删除",
+                "施設「" + name + "」を削除してもよろしいですか？\n"
+                        + "注意：関連するシフト設定・稼働率・シフト表データにも影響します。",
+                "削除確認",
                 JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
             if (facilityDao.delete(id)) {
                 loadData();
-                JOptionPane.showMessageDialog(this, "删除成功");
+                JOptionPane.showMessageDialog(this, "削除しました");
             } else {
-                JOptionPane.showMessageDialog(this, "删除失败", "错误", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "削除に失敗しました", "エラー", JOptionPane.ERROR_MESSAGE);
             }
         }
-
-
-
     }
 
     /**
      * 显示新增/编辑对话框
+     * 新規・編集ダイアログを表示
+     * Show add/edit dialog
+     *
      * @param facility null 表示新增，非 null 表示编辑
+     *                 null なら新規、非 null なら編集
+     *                 null means adding, non-null means editing
      */
     private void showEditDialog(Facility facility) {
         boolean isNew = (facility == null);
@@ -151,23 +171,23 @@ public class FacilityPanel extends JPanel {
         gbc.anchor = GridBagConstraints.WEST;
 
         gbc.gridx = 0; gbc.gridy = 0;
-        formPanel.add(new JLabel("设施名称："), gbc);
+        formPanel.add(new JLabel("施設名："), gbc);
         gbc.gridx = 1;
         formPanel.add(nameField, gbc);
 
         gbc.gridx = 0; gbc.gridy = 1;
-        formPanel.add(new JLabel("备注："), gbc);
+        formPanel.add(new JLabel("備考："), gbc);
         gbc.gridx = 1;
         formPanel.add(noteField, gbc);
 
         int result = JOptionPane.showConfirmDialog(this, formPanel,
-                isNew ? "新增设施" : "编辑设施",
+                isNew ? "施設の新規追加" : "施設の編集",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
         if (result == JOptionPane.OK_OPTION) {
             String name = nameField.getText().trim();
             if (name.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "设施名称不能为空", "错误", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "施設名は必須です", "エラー", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             facility.setName(name);
@@ -183,15 +203,20 @@ public class FacilityPanel extends JPanel {
             if (success) {
                 loadData();
             } else {
-                JOptionPane.showMessageDialog(this, "保存失败", "错误", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "保存に失敗しました", "エラー", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
-    /** 显示设施需求配置对话框 */
+
+    /**
+     * 显示设施需求配置对话框
+     * 施設需要設定ダイアログを表示
+     * Show the facility demand configuration dialog
+     */
     private void showDemandDialog() {
         int row = table.getSelectedRow();
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "请先选择一个设施");
+            JOptionPane.showMessageDialog(this, "施設を選択してください");
             return;
         }
         Facility f = new Facility();
@@ -200,9 +225,10 @@ public class FacilityPanel extends JPanel {
         f.setNote((String) tableModel.getValueAt(row, 2));
 
         // 找到父窗口（顶层 Frame）作为对话框的 owner
+        // 親ウィンドウ（トップレベル Frame）をダイアログの owner に設定
+        // Find the parent window (top-level Frame) as the dialog's owner
         Frame owner = (Frame) SwingUtilities.getWindowAncestor(this);
         FacilityDemandDialog dialog = new FacilityDemandDialog(owner, f);
         dialog.setVisible(true);
     }
-
 }

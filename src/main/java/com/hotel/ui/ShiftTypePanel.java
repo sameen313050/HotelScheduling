@@ -10,6 +10,20 @@ import java.util.List;
 
 /**
  * 班次设置面板
+ * シフト種別管理パネル
+ * Shift type management panel
+ *
+ * <p>提供班次类型的 CRUD 操作。班次 = 一段固定的工作时间段（例：早番 8:00-17:00）。
+ * 每个班次属于某个时段（朝/昼/夕/夜），时段用于算法的硬性约束判定
+ * （比如"夜勤専属只能上夜班"、"夜班次日不能接早班"）。</p>
+ *
+ * <p>シフト種別の CRUD 操作を提供。シフト = 固定の勤務時間帯（例：早番 8:00-17:00）。
+ * 各シフトは時間帯（朝/昼/夕/夜）に所属し、時間帯はアルゴリズムのハード制約判定に使用
+ * （例：「夜勤専属は夜番のみ」「夜番翌日は早番不可」）。</p>
+ *
+ * <p>Provides CRUD for shift types. A shift = a fixed working time period (e.g. Morning 8:00-17:00).
+ * Each shift belongs to a period (朝/昼/夕/夜), used by the algorithm for hard constraints
+ * (e.g. "night-only staff work night only", "no morning after night").</p>
  */
 public class ShiftTypePanel extends JPanel {
 
@@ -17,20 +31,27 @@ public class ShiftTypePanel extends JPanel {
     private DefaultTableModel tableModel;
     private JTable table;
 
-    // 时段选项：数据库存日文，界面显示日中对照
+    // 时段选项：数据库存日文，界面直接显示日文（日本客户友好）
+    // 時間帯選択肢：DB に日本語保存、画面も日本語表示（日本顧客向け）
+    // Period options: stored as Japanese in DB, displayed in Japanese (Japan-customer friendly)
     private static final String[] PERIOD_DB_VALUES = {"朝", "昼", "夕", "夜"};
-    private static final String[] PERIOD_DISPLAY = {"朝（早）", "昼（中）", "夕（晚）", "夜（夜）"};
+    private static final String[] PERIOD_DISPLAY = {"朝（早番）", "昼（中番）", "夕（遅番）", "夜（夜番）"};
 
+    /**
+     * 构造方法：初始化 UI 并加载数据
+     * コンストラクタ：UI 初期化とデータ読み込み
+     * Constructor: initializes UI and loads data
+     */
     public ShiftTypePanel() {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // 顶部按钮区
+        // 顶部按钮区 / 上部ボタンエリア / Top button area
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        JButton addBtn = new JButton("新增班次");
-        JButton editBtn = new JButton("编辑");
-        JButton deleteBtn = new JButton("删除");
-        JButton refreshBtn = new JButton("刷新");
+        JButton addBtn = new JButton("新規追加");
+        JButton editBtn = new JButton("編集");
+        JButton deleteBtn = new JButton("削除");
+        JButton refreshBtn = new JButton("更新");
 
         topPanel.add(addBtn);
         topPanel.add(editBtn);
@@ -38,8 +59,8 @@ public class ShiftTypePanel extends JPanel {
         topPanel.add(refreshBtn);
         add(topPanel, BorderLayout.NORTH);
 
-        // 表格
-        String[] columns = {"ID", "班次名称", "开始时间", "结束时间", "跨日", "时段"};
+        // 表格 / テーブル / Table
+        String[] columns = {"ID", "シフト名", "開始時刻", "終了時刻", "日跨ぎ", "時間帯"};
         tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -52,16 +73,17 @@ public class ShiftTypePanel extends JPanel {
         table.getColumnModel().getColumn(2).setPreferredWidth(100);
         table.getColumnModel().getColumn(3).setPreferredWidth(100);
         table.getColumnModel().getColumn(4).setPreferredWidth(60);
-        table.getColumnModel().getColumn(5).setPreferredWidth(100);
+        table.getColumnModel().getColumn(5).setPreferredWidth(120);
 
         add(new JScrollPane(table), BorderLayout.CENTER);
 
-        // 绑定事件
+        // 事件绑定 / イベントバインド / Event binding
         addBtn.addActionListener(e -> showEditDialog(null));
         editBtn.addActionListener(e -> editSelected());
         deleteBtn.addActionListener(e -> deleteSelected());
         refreshBtn.addActionListener(e -> loadData());
 
+        // 双击行 → 编辑 / 行ダブルクリック → 編集 / Double-click row → edit
         table.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -74,6 +96,11 @@ public class ShiftTypePanel extends JPanel {
         loadData();
     }
 
+    /**
+     * 从数据库加载数据到表格
+     * DB からデータを読み込みテーブルに表示
+     * Load data from DB into table
+     */
     private void loadData() {
         tableModel.setRowCount(0);
         List<ShiftType> shifts = shiftDao.findAll();
@@ -83,29 +110,41 @@ public class ShiftTypePanel extends JPanel {
                     s.getName(),
                     s.getStartTime(),
                     s.getEndTime(),
-                    s.isCrossDay() ? "是" : "否",
+                    s.isCrossDay() ? "はい" : "いいえ",
                     periodToDisplay(s.getPeriod())
             });
         }
     }
 
-    /** 把数据库里的日文时段转成"日（中）"显示 */
+    /**
+     * 把数据库里的时段代码转成可读显示
+     * DB 保存の時間帯コードを可読表示に変換
+     * Convert DB period code to readable display
+     */
     private String periodToDisplay(String dbValue) {
         for (int i = 0; i < PERIOD_DB_VALUES.length; i++) {
             if (PERIOD_DB_VALUES[i].equals(dbValue)) {
                 return PERIOD_DISPLAY[i];
             }
         }
-        return dbValue;  // 找不到就原样返回
+        return dbValue;  // 找不到就原样返回 / 見つからなければそのまま返却 / Return as-is if not found
     }
 
+    /**
+     * 编辑选中行
+     * 選択行を編集
+     * Edit selected row
+     *
+     * 从数据库重新读取对象，避免显示转换造成的数据丢失。
+     * DB から再取得、表示変換によるデータ損失を回避。
+     * Re-fetch from DB to avoid data loss caused by display conversion.
+     */
     private void editSelected() {
         int row = table.getSelectedRow();
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "请先选择一行");
+            JOptionPane.showMessageDialog(this, "行を選択してください");
             return;
         }
-        // 从数据库重新读，避免显示转换造成数据丢失
         int id = (int) tableModel.getValueAt(row, 0);
         ShiftType target = null;
         for (ShiftType s : shiftDao.findAll()) {
@@ -119,43 +158,54 @@ public class ShiftTypePanel extends JPanel {
         }
     }
 
+    /**
+     * 删除选中行（含二次确认）
+     * 選択行を削除（確認ダイアログあり）
+     * Delete selected row (with confirmation)
+     */
     private void deleteSelected() {
         int row = table.getSelectedRow();
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "请先选择一行");
+            JOptionPane.showMessageDialog(this, "行を選択してください");
             return;
         }
         int id = (int) tableModel.getValueAt(row, 0);
         String name = (String) tableModel.getValueAt(row, 1);
 
         int confirm = JOptionPane.showConfirmDialog(this,
-                "确定要删除班次「" + name + "」吗？\n注意：相关的设施配置、排班数据也会受影响。",
-                "确认删除",
+                "シフト「" + name + "」を削除してもよろしいですか？\n"
+                        + "注意：関連する施設設定・シフト表データにも影響します。",
+                "削除確認",
                 JOptionPane.YES_NO_OPTION);
 
         if (confirm == JOptionPane.YES_OPTION) {
             if (shiftDao.delete(id)) {
                 loadData();
-                JOptionPane.showMessageDialog(this, "删除成功");
+                JOptionPane.showMessageDialog(this, "削除しました");
             } else {
-                JOptionPane.showMessageDialog(this, "删除失败", "错误", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "削除に失敗しました", "エラー", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
+    /**
+     * 显示新增/编辑对话框
+     * 新規・編集ダイアログを表示
+     * Show add/edit dialog
+     */
     private void showEditDialog(ShiftType shift) {
         boolean isNew = (shift == null);
         if (isNew) {
             shift = new ShiftType();
-            shift.setPeriod(PERIOD_DB_VALUES[0]);  // 默认朝
+            shift.setPeriod(PERIOD_DB_VALUES[0]);  // 默认朝 / デフォルトは朝 / Default to 朝
         }
 
         JTextField nameField = new JTextField(shift.getName() == null ? "" : shift.getName(), 20);
         JTextField startField = new JTextField(shift.getStartTime() == null ? "08:00" : shift.getStartTime(), 10);
         JTextField endField = new JTextField(shift.getEndTime() == null ? "17:00" : shift.getEndTime(), 10);
-        JCheckBox crossDayBox = new JCheckBox("跨日（夜班从21点上到次日9点请勾选）", shift.isCrossDay());
+        JCheckBox crossDayBox = new JCheckBox("日跨ぎ（夜勤 21:00 〜 翌 09:00 等はチェック）", shift.isCrossDay());
 
-        // 时段下拉框
+        // 时段下拉框 / 時間帯ドロップダウン / Period dropdown
         JComboBox<String> periodBox = new JComboBox<>(PERIOD_DISPLAY);
         for (int i = 0; i < PERIOD_DB_VALUES.length; i++) {
             if (PERIOD_DB_VALUES[i].equals(shift.getPeriod())) {
@@ -170,24 +220,24 @@ public class ShiftTypePanel extends JPanel {
         gbc.anchor = GridBagConstraints.WEST;
 
         gbc.gridx = 0; gbc.gridy = 0;
-        formPanel.add(new JLabel("班次名称："), gbc);
+        formPanel.add(new JLabel("シフト名："), gbc);
         gbc.gridx = 1;
         formPanel.add(nameField, gbc);
 
         gbc.gridx = 0; gbc.gridy = 1;
-        formPanel.add(new JLabel("开始时间："), gbc);
+        formPanel.add(new JLabel("開始時刻："), gbc);
         gbc.gridx = 1;
         formPanel.add(startField, gbc);
         gbc.gridx = 2;
-        formPanel.add(new JLabel("格式 HH:MM，如 08:00"), gbc);
+        formPanel.add(new JLabel("形式 HH:MM、例：08:00"), gbc);
 
         gbc.gridx = 0; gbc.gridy = 2;
-        formPanel.add(new JLabel("结束时间："), gbc);
+        formPanel.add(new JLabel("終了時刻："), gbc);
         gbc.gridx = 1;
         formPanel.add(endField, gbc);
 
         gbc.gridx = 0; gbc.gridy = 3;
-        formPanel.add(new JLabel("时段分类："), gbc);
+        formPanel.add(new JLabel("時間帯区分："), gbc);
         gbc.gridx = 1;
         formPanel.add(periodBox, gbc);
 
@@ -195,7 +245,7 @@ public class ShiftTypePanel extends JPanel {
         formPanel.add(crossDayBox, gbc);
 
         int result = JOptionPane.showConfirmDialog(this, formPanel,
-                isNew ? "新增班次" : "编辑班次",
+                isNew ? "シフトの新規追加" : "シフトの編集",
                 JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
         if (result == JOptionPane.OK_OPTION) {
@@ -204,11 +254,11 @@ public class ShiftTypePanel extends JPanel {
             String end = endField.getText().trim();
 
             if (name.isEmpty()) {
-                JOptionPane.showMessageDialog(this, "班次名称不能为空", "错误", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "シフト名は必須です", "エラー", JOptionPane.ERROR_MESSAGE);
                 return;
             }
             if (!isValidTime(start) || !isValidTime(end)) {
-                JOptionPane.showMessageDialog(this, "时间格式不正确，应为 HH:MM（如 08:00）", "错误", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "時刻の形式が正しくありません。HH:MM で指定してください（例：08:00）", "エラー", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
@@ -223,13 +273,18 @@ public class ShiftTypePanel extends JPanel {
             if (success) {
                 loadData();
             } else {
-                JOptionPane.showMessageDialog(this, "保存失败", "错误", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "保存に失敗しました", "エラー", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
-    /** 简单验证时间格式 HH:MM */
+    /**
+     * 简单验证时间格式 HH:MM
+     * 時刻形式 HH:MM の簡易バリデーション
+     * Simple validation for time format HH:MM
+     */
     private boolean isValidTime(String time) {
+        // 先用正则快速判断格式 / まず正規表現で形式チェック / Regex format check first
         if (time == null || !time.matches("\\d{2}:\\d{2}")) {
             return false;
         }
@@ -237,6 +292,7 @@ public class ShiftTypePanel extends JPanel {
             String[] parts = time.split(":");
             int h = Integer.parseInt(parts[0]);
             int m = Integer.parseInt(parts[1]);
+            // 时间范围：00-23 时、00-59 分 / 時刻範囲：00-23 時、00-59 分 / Time range: 0-23 hours, 0-59 minutes
             return h >= 0 && h <= 23 && m >= 0 && m <= 59;
         } catch (Exception e) {
             return false;
